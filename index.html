@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Action QA Validation</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --panel-bg: #ffffff;
+    --accent: #1a73e8;
+    --accent-dark: #1557b0;
+    --border: #dadce0;
+    --text: #202124;
+    --text-muted: #5f6368;
+    --risky: #d93025;
+    --risky-bg: #fce8e6;
+    --medium: #b06000;
+    --medium-bg: #fef7e0;
+    --normal: #188038;
+    --normal-bg: #e6f4ea;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .layout { display: flex; height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+  }
+  .sidebar h1 {
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0 16px 16px;
+    margin: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-left: 3px solid transparent;
+    font-weight: 500;
+  }
+  .nav-item:hover { background: var(--bg); }
+  .nav-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--bg);
+  }
+
+  /* Content panel */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+  .view h2 { margin-top: 0; font-size: 18px; }
+
+  /* Form */
+  form { max-width: 560px; }
+  .field { margin-bottom: 14px; }
+  label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 13px; }
+  input[type=text], textarea, select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  .risk-options { display: flex; gap: 8px; }
+  .risk-option {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .risk-option.selected-Risky { background: var(--risky-bg); border-color: var(--risky); color: var(--risky); }
+  .risk-option.selected-Medium { background: var(--medium-bg); border-color: var(--medium); color: var(--medium); }
+  .risk-option.selected-Normal { background: var(--normal-bg); border-color: var(--normal); color: var(--normal); }
+
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-dark); }
+  button:disabled { background: var(--border); cursor: not-allowed; }
+  button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+  .msg { margin-top: 10px; font-size: 13px; }
+  .msg.success { color: var(--normal); }
+  .msg.error { color: var(--risky); }
+
+  /* Filters */
+  .filters { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters input, .filters select { width: auto; min-width: 140px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; background: var(--panel-bg); }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--panel-bg);
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-Risky { background: var(--risky-bg); color: var(--risky); }
+  .badge-Medium { background: var(--medium-bg); color: var(--medium); }
+  .badge-Normal { background: var(--normal-bg); color: var(--normal); }
+
+  /* Dashboard cards */
+  .cards { display: flex; gap: 16px; margin-bottom: 24px; }
+  .card {
+    flex: 1;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .card .count { font-size: 28px; font-weight: 700; }
+  .card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+  .card.Risky .count { color: var(--risky); }
+  .card.Medium .count { color: var(--medium); }
+  .card.Normal .count { color: var(--normal); }
+
+  .empty-state { color: var(--text-muted); padding: 20px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="sidebar">
+    <h1>Agent Action QA</h1>
+    <div class="nav-item active" data-view="new-review">+ New Review</div>
+    <div class="nav-item" data-view="review-log">Review Log</div>
+    <div class="nav-item" data-view="dashboard">Dashboard</div>
+  </div>
+
+  <div class="content">
+
+    <!-- NEW REVIEW -->
+    <div class="view active" id="new-review">
+      <h2>New Review</h2>
+      <form id="review-form">
+        <div class="field">
+          <label>Reviewer Name</label>
+          <input type="text" id="f-reviewer" required>
+        </div>
+        <div class="field">
+          <label>Agent Name / ID</label>
+          <input type="text" id="f-agent" required>
+        </div>
+        <div class="field">
+          <label>Ticket ID</label>
+          <input type="text" id="f-ticket" required>
+        </div>
+        <div class="field">
+          <label>Action Taken / Resolution</label>
+          <textarea id="f-action" required></textarea>
+        </div>
+        <div class="field">
+          <label>Risk Level</label>
+          <div class="risk-options" id="risk-options">
+            <div class="risk-option" data-risk="Risky">Risky</div>
+            <div class="risk-option" data-risk="Medium">Medium</div>
+            <div class="risk-option" data-risk="Normal">Normal</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Feedback</label>
+          <textarea id="f-feedback" required></textarea>
+        </div>
+        <button type="submit" id="submit-btn">Submit Review</button>
+        <div class="msg" id="form-msg"></div>
+      </form>
+    </div>
+
+    <!-- REVIEW LOG -->
+    <div class="view" id="review-log">
+      <h2>Review Log</h2>
+      <div class="filters">
+        <input type="text" id="filter-agent" placeholder="Filter by agent">
+        <input type="text" id="filter-ticket" placeholder="Filter by ticket ID">
+        <select id="filter-risk">
+          <option value="">All risk levels</option>
+          <option value="Risky">Risky</option>
+          <option value="Medium">Medium</option>
+          <option value="Normal">Normal</option>
+        </select>
+        <button class="secondary" id="apply-filters">Apply</button>
+        <button class="secondary" id="clear-filters">Clear</button>
+      </div>
+      <div id="log-table-wrap">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="view" id="dashboard">
+      <h2>Dashboard</h2>
+      <div class="cards">
+        <div class="card Risky"><div class="count" id="count-risky">-</div><div class="label">Risky</div></div>
+        <div class="card Medium"><div class="count" id="count-medium">-</div><div class="label">Medium</div></div>
+        <div class="card Normal"><div class="count" id="count-normal">-</div><div class="label">Normal</div></div>
+      </div>
+      <h2>By Agent</h2>
+      <div id="agent-table-wrap">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
